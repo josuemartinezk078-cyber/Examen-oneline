@@ -1,56 +1,146 @@
-document.getElementById('evaluationForm').addEventListener('submit',function(e){
-    e.preventDefault();
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluación de Seguridad</title>
 
-    var nombre = document.getElementById('nombre').value;
-    var cedula = document.getElementById('cedula').value;
-    var correo = document.getElementById('correo').value;
-    var empresa = document.getElementById('empresa').value;
+<style>
+body {font-family: Arial; background: linear-gradient(135deg,#FF9900,#146EB4); padding:20px;}
+.container {max-width:900px;margin:auto;background:white;padding:40px;border-radius:12px;}
+.question {margin-bottom:20px;padding:15px;background:#f4f4f4;border-radius:8px;}
+.options label {display:block;margin-bottom:8px;}
+button {background:#FF9900;color:white;padding:15px;border:none;width:100%;font-size:18px;border-radius:8px;cursor:pointer;}
+.result-container{display:none;text-align:center;margin-top:30px;}
+input{width:100%;padding:8px;margin-top:5px;}
+</style>
+</head>
 
-    var correctas = 0;
-    var detalleRespuestas = "REPORTE DE EVALUACIÓN\n";
-    detalleRespuestas += "Nombre: " + nombre + "\n";
-    detalleRespuestas += "Cédula: " + cedula + "\n";
-    detalleRespuestas += "Correo: " + correo + "\n";
-    detalleRespuestas += "Empresa: " + empresa + "\n\n";
-    detalleRespuestas += "DETALLE DE RESPUESTAS:\n\n";
+<body>
 
-    for(var i=0; i<preguntasSeleccionadas.length; i++){
-        var p = preguntasSeleccionadas[i];
-        var checked = document.querySelector('input[name="q'+p.id+'"]:checked');
-        var respuestaUsuario = checked ? checked.value : "No respondió";
-        var correcta = p.respuesta;
+<div class="container">
+<h2>Evaluación Seguridad</h2>
 
-        var estado = "❌ Incorrecta";
-        if(respuestaUsuario === correcta){
-            correctas++;
-            estado = "✅ Correcta";
-        }
+<form id="evaluationForm">
 
-        detalleRespuestas += (i+1) + ". " + p.pregunta + "\n";
-        detalleRespuestas += "   Respondió: " + respuestaUsuario + "\n";
-        detalleRespuestas += "   Correcta: " + correcta + "\n";
-        detalleRespuestas += "   Resultado: " + estado + "\n\n";
-    }
+<h3>Información Personal</h3>
 
-    var porcentaje = (correctas/10)*100;
-    var aprobado = porcentaje >= 80;
+<div class="question">
+Nombre:
+<input type="text" id="nombre" required>
+</div>
 
-    detalleRespuestas += "----------------------------------\n";
-    detalleRespuestas += "PUNTAJE: " + correctas + "/10\n";
-    detalleRespuestas += "PORCENTAJE: " + porcentaje.toFixed(1) + "%\n";
-    detalleRespuestas += "RESULTADO: " + (aprobado ? "APROBADO" : "REPROBADO");
+<div class="question">
+Cédula:
+<input type="text" id="cedula" required>
+</div>
 
-    document.getElementById('evaluationForm').style.display = 'none';
-    document.getElementById('resultContainer').style.display = 'block';
-    document.getElementById('scoreDisplay').textContent = correctas+'/10';
-    document.getElementById('scoreMessage').textContent = porcentaje.toFixed(1)+'%';
-    document.getElementById('scoreBadge').textContent = aprobado ? 'APROBADO ✓' : 'REPROBADO ✗';
-    document.getElementById('scoreBadge').className = 'success-badge '+(aprobado ? 'badge-aprobado' : 'badge-reprobado');
+<div class="question">
+Correo:
+<input type="email" id="correo" required>
+</div>
 
-    // Generar archivo TXT automático
-    var blob = new Blob([detalleRespuestas], { type: "text/plain" });
-    var link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "Resultado_" + nombre.replace(/\s/g,"_") + ".txt";
-    link.click();
+<div class="question">
+Empresa:
+<input type="text" id="empresa" required>
+</div>
+
+<h3>Preguntas de Conocimiento</h3>
+
+<div id="randomQuestions"></div>
+
+<button type="submit">Enviar Evaluación</button>
+
+</form>
+
+<div class="result-container" id="resultContainer">
+<h2>Resultado</h2>
+<div id="scoreDisplay"></div>
+<div id="scoreMessage"></div>
+</div>
+
+</div>
+
+<script>
+
+var totalPreguntas = 10;
+
+var bankPreguntas = [
+{id:1,pregunta:"¿Está permitido fumar dentro de las instalaciones?",opciones:["Sí","No","Solo en descanso","Depende"],respuesta:"B"},
+{id:2,pregunta:"¿Debe estar capacitado para operar maquinaria?",opciones:["No","Sí","Solo supervisor","Opcional"],respuesta:"B"},
+{id:3,pregunta:"¿Es obligatorio usar EPP?",opciones:["No","Sí","Opcional","Solo visita"],respuesta:"B"},
+{id:4,pregunta:"¿Se deben reportar accidentes inmediatamente?",opciones:["No","Sí","Después","Nunca"],respuesta:"B"},
+{id:5,pregunta:"¿Debe seguir normas internas?",opciones:["No","Sí","Opcional","Depende"],respuesta:"B"},
+{id:6,pregunta:"¿Debe usar casco en zonas señalizadas?",opciones:["No","Sí","Opcional","Nunca"],respuesta:"B"},
+{id:7,pregunta:"¿Debe respetar la señalización?",opciones:["No","Sí","Opcional","Nunca"],respuesta:"B"},
+{id:8,pregunta:"¿Debe usar gafas de seguridad cuando aplique?",opciones:["No","Sí","Opcional","Nunca"],respuesta:"B"},
+{id:9,pregunta:"¿Debe mantener el área de trabajo ordenada?",opciones:["No","Sí","Opcional","Nunca"],respuesta:"B"},
+{id:10,pregunta:"¿Debe reportar condiciones inseguras?",opciones:["No","Sí","Opcional","Nunca"],respuesta:"B"},
+{id:11,pregunta:"¿Debe cumplir políticas de seguridad?",opciones:["No","Sí","Opcional","Nunca"],respuesta:"B"},
+{id:12,pregunta:"¿Debe asistir a inducción antes de trabajar?",opciones:["No","Sí","Opcional","Nunca"],respuesta:"B"}
+];
+
+var preguntasSeleccionadas = bankPreguntas.sort(()=>0.5-Math.random()).slice(0,totalPreguntas);
+var container = document.getElementById("randomQuestions");
+
+preguntasSeleccionadas.forEach((p,i)=>{
+let div = document.createElement("div");
+div.className="question";
+let html="<b>"+(i+1)+". "+p.pregunta+"</b><div class='options'>";
+p.opciones.forEach((op,j)=>{
+let letra=String.fromCharCode(65+j);
+html+="<label><input type='radio' name='q"+p.id+"' value='"+letra+"' required> "+letra+". "+op+"</label>";
 });
+html+="</div>";
+div.innerHTML=html;
+container.appendChild(div);
+});
+
+document.getElementById("evaluationForm").addEventListener("submit",function(e){
+e.preventDefault();
+
+var nombre=document.getElementById("nombre").value;
+var cedula=document.getElementById("cedula").value;
+var correo=document.getElementById("correo").value;
+var empresa=document.getElementById("empresa").value;
+
+var correctas=0;
+var detalle="REPORTE EXAMEN\n\n";
+detalle+="Nombre: "+nombre+"\n";
+detalle+="Cédula: "+cedula+"\n";
+detalle+="Correo: "+correo+"\n";
+detalle+="Empresa: "+empresa+"\n\n";
+
+preguntasSeleccionadas.forEach((p,i)=>{
+let checked=document.querySelector("input[name='q"+p.id+"']:checked");
+let respuesta=checked?checked.value:"No respondió";
+
+if(respuesta===p.respuesta){correctas++;}
+
+detalle+="Pregunta "+(i+1)+": "+p.pregunta+"\n";
+detalle+="Respondió: "+respuesta+"\n";
+detalle+="Correcta: "+p.respuesta+"\n\n";
+});
+
+var porcentaje=(correctas/totalPreguntas)*100;
+
+detalle+="Puntaje: "+correctas+"/"+totalPreguntas+"\n";
+detalle+="Porcentaje: "+porcentaje+"%\n";
+
+document.getElementById("evaluationForm").style.display="none";
+document.getElementById("resultContainer").style.display="block";
+document.getElementById("scoreDisplay").innerHTML="<h1>"+correctas+"/"+totalPreguntas+"</h1>";
+document.getElementById("scoreMessage").innerHTML="Resultado: "+porcentaje+"%";
+
+var blob=new Blob([detalle],{type:"text/plain"});
+var link=document.createElement("a");
+link.href=URL.createObjectURL(blob);
+link.download="Resultado_"+nombre+".txt";
+link.click();
+
+});
+
+</script>
+
+</body>
+</html>
